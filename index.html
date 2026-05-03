@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atmosphere - Weather Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="theme-dark">
+    <!-- Animated Weather Background -->
+    <div id="weather-bg" class="weather-bg"></div>
+
+    <!-- API Key Setup Banner -->
+    <div id="api-key-banner" class="api-key-banner" style="display: none;">
+        <div class="banner-content">
+            <span class="banner-icon">⚠️</span>
+            <span class="banner-text">Add your OpenWeatherMap API key in app.js to get started</span>
+        </div>
+    </div>
+
+    <!-- Weather Alert Banners -->
+    <div id="alert-banners" class="alert-banners"></div>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="navbar-left">
+                <div class="logo">
+                    <span class="logo-icon">☁</span>
+                    <span class="logo-text">Atmosphere</span>
+                </div>
+            </div>
+            <div class="navbar-center">
+                <div id="live-clock" class="live-clock">Loading...</div>
+            </div>
+            <div class="navbar-right">
+                <button id="unit-toggle" class="unit-toggle" aria-label="Toggle temperature unit">
+                    <span class="unit-option active" data-unit="C">°C</span>
+                    <span class="unit-divider">/</span>
+                    <span class="unit-option" data-unit="F">°F</span>
+                </button>
+                <button id="theme-toggle" class="icon-button" aria-label="Toggle theme">
+                    <span class="theme-icon">🌙</span>
+                </button>
+                <button id="settings-toggle" class="icon-button" aria-label="Open settings">
+                    <span>⚙️</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Search Section -->
+            <section class="search-section">
+                <div class="search-bar">
+                    <input 
+                        type="text" 
+                        id="search-input" 
+                        class="search-input" 
+                        placeholder="Search city, zip code..."
+                        role="combobox"
+                        aria-expanded="false"
+                        aria-controls="autocomplete-dropdown"
+                        aria-autocomplete="list"
+                    >
+                    <button id="location-btn" class="location-btn" aria-label="Use my location">
+                        <span>📍</span>
+                        <span>Use My Location</span>
+                    </button>
+                </div>
+                <div id="autocomplete-dropdown" class="autocomplete-dropdown" role="listbox" style="display: none;"></div>
+                <div id="recent-searches" class="recent-searches"></div>
+            </section>
+
+            <!-- Loading Skeleton -->
+            <div id="loading-skeleton" class="loading-skeleton" style="display: none;">
+                <div class="skeleton-hero"></div>
+                <div class="skeleton-stats"></div>
+                <div class="skeleton-chart"></div>
+                <div class="skeleton-forecast"></div>
+            </div>
+
+            <!-- Error State -->
+            <div id="error-state" class="error-state" style="display: none;">
+                <div class="error-icon"></div>
+                <h2 class="error-title"></h2>
+                <p class="error-message"></p>
+                <button id="error-action" class="error-action"></button>
+            </div>
+
+            <!-- Weather Content -->
+            <div id="weather-content" class="weather-content" style="display: none;">
+                <!-- Hero Section -->
+                <section class="hero-section">
+                    <div id="hero-card" class="hero-card">
+                        <div class="hero-header">
+                            <div class="hero-location">
+                                <h1 id="hero-city" class="hero-city">--</h1>
+                                <span id="hero-country" class="hero-country">--</span>
+                            </div>
+                            <div id="hero-updated" class="hero-updated">Updated -- ago</div>
+                        </div>
+                        
+                        <div class="hero-main">
+                            <div class="hero-temp-section">
+                                <div id="hero-temp" class="hero-temp">--°</div>
+                                <div class="hero-feels">
+                                    <span>Feels like <span id="hero-feels-temp">--°</span></span>
+                                    <span class="temp-divider">|</span>
+                                    <span>Min <span id="hero-min-temp">--°</span></span>
+                                    <span class="temp-divider">|</span>
+                                    <span>Max <span id="hero-max-temp">--°</span></span>
+                                </div>
+                            </div>
+                            <div class="hero-condition">
+                                <img id="hero-icon" class="hero-icon" src="" alt="" style="display: none;">
+                                <div id="hero-condition-text" class="hero-condition-text">--</div>
+                                <div id="hero-weather-emoji" class="hero-weather-emoji">☁️</div>
+                            </div>
+                        </div>
+
+                        <div class="hero-stats">
+                            <div class="hero-stat">
+                                <span class="stat-icon">💧</span>
+                                <span class="stat-label">Humidity</span>
+                                <span id="hero-humidity" class="stat-value">--%</span>
+                            </div>
+                            <div class="hero-stat">
+                                <span class="stat-icon">💨</span>
+                                <span class="stat-label">Wind</span>
+                                <span id="hero-wind" class="stat-value">-- km/h</span>
+                                <span id="hero-wind-arrow" class="wind-arrow" style="transform: rotate(0deg);">↑</span>
+                            </div>
+                            <div class="hero-stat">
+                                <span class="stat-icon">👁</span>
+                                <span class="stat-label">Visibility</span>
+                                <span id="hero-visibility" class="stat-value">-- km</span>
+                            </div>
+                            <div class="hero-stat">
+                                <span class="stat-icon">🌡</span>
+                                <span class="stat-label">Pressure</span>
+                                <span id="hero-pressure" class="stat-value">-- hPa</span>
+                            </div>
+                        </div>
+
+                        <div class="hero-footer">
+                            <button id="share-btn" class="share-btn" aria-label="Share weather">
+                                <span>📤</span>
+                                <span>Share</span>
+                            </button>
+                            <div id="data-age" class="data-age">Data from -- ago</div>
+                        </div>
+                    </div>
+
+                    <!-- Side Stats Grid -->
+                    <div class="side-stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-icon">🌅</span>
+                                <span class="stat-card-title">Sunrise & Sunset</span>
+                            </div>
+                            <div class="stat-card-content">
+                                <canvas id="sun-arc-canvas" class="stat-canvas" width="200" height="120" aria-describedby="sun-arc-desc"></canvas>
+                                <div id="sun-arc-desc" class="sr-only">Sun position arc showing current time between sunrise and sunset</div>
+                                <div class="sun-times">
+                                    <div class="sun-time">
+                                        <span class="sun-time-label">Sunrise</span>
+                                        <span id="sunrise-time" class="sun-time-value">--:--</span>
+                                    </div>
+                                    <div class="sun-time">
+                                        <span class="sun-time-label">Sunset</span>
+                                        <span id="sunset-time" class="sun-time-value">--:--</span>
+                                    </div>
+                                </div>
+                                <div id="sun-next" class="sun-next">-- until --</div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-icon">☀️</span>
+                                <span class="stat-card-title">UV Index</span>
+                            </div>
+                            <div class="stat-card-content">
+                                <div id="uv-value" class="uv-value">--</div>
+                                <div id="uv-label" class="uv-label">--</div>
+                                <div class="uv-bar">
+                                    <div id="uv-progress" class="uv-progress" style="width: 0%"></div>
+                                </div>
+                                <div id="uv-recommendation" class="uv-recommendation">--</div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-icon">🧭</span>
+                                <span class="stat-card-title">Wind</span>
+                            </div>
+                            <div class="stat-card-content">
+                                <canvas id="compass-canvas" class="stat-canvas" width="150" height="150" aria-describedby="compass-desc"></canvas>
+                                <div id="compass-desc" class="sr-only">Compass showing wind direction and speed</div>
+                                <div id="wind-gust" class="wind-gust" style="display: none;">Gust: -- km/h</div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-icon">💧</span>
+                                <span class="stat-card-title">Humidity</span>
+                            </div>
+                            <div class="stat-card-content">
+                                <canvas id="humidity-canvas" class="stat-canvas" width="150" height="150" aria-describedby="humidity-desc"></canvas>
+                                <div id="humidity-desc" class="sr-only">Humidity gauge showing current percentage</div>
+                                <div id="humidity-comfort" class="humidity-comfort">--</div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-icon">🌡</span>
+                                <span class="stat-card-title">Pressure</span>
+                            </div>
+                            <div class="stat-card-content">
+                                <div id="pressure-value" class="pressure-value">-- hPa</div>
+                                <div id="pressure-trend" class="pressure-trend">→ Steady</div>
+                                <canvas id="pressure-canvas" class="stat-canvas" width="200" height="40" aria-describedby="pressure-desc"></canvas>
+                                <div id="pressure-desc" class="sr-only">Pressure bar showing relative value</div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-icon">👁</span>
+                                <span class="stat-card-title">Visibility</span>
+                            </div>
+                            <div class="stat-card-content">
+                                <div id="visibility-value" class="visibility-value">-- km</div>
+                                <div id="visibility-desc" class="visibility-desc">--</div>
+                                <div id="visibility-dots" class="visibility-dots"></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Hourly Forecast Chart -->
+                <section class="hourly-section">
+                    <div class="section-header">
+                        <h2 class="section-title">Hourly Forecast</h2>
+                    </div>
+                    <div class="hourly-chart-container">
+                        <canvas id="hourly-chart" class="hourly-chart" aria-describedby="hourly-chart-desc"></canvas>
+                        <div id="hourly-chart-desc" class="sr-only">24-hour temperature forecast with rain probability</div>
+                        <div id="hourly-tooltip" class="hourly-tooltip" style="display: none;"></div>
+                    </div>
+                </section>
+
+                <!-- 5-Day Forecast -->
+                <section class="forecast-section">
+                    <div class="section-header">
+                        <h2 class="section-title">5-Day Forecast</h2>
+                    </div>
+                    <div id="forecast-cards" class="forecast-cards"></div>
+                </section>
+
+                <!-- Air Quality & Additional Stats -->
+                <section class="aqi-section">
+                    <div class="section-header">
+                        <h2 class="section-title">Air Quality Index</h2>
+                    </div>
+                    <div id="aqi-panel" class="aqi-panel">
+                        <div class="aqi-main">
+                            <canvas id="aqi-ring-canvas" class="aqi-ring" width="120" height="120" aria-describedby="aqi-ring-desc"></canvas>
+                            <div id="aqi-ring-desc" class="sr-only">Air quality index ring gauge</div>
+                        </div>
+                        <div class="aqi-info">
+                            <div id="aqi-label" class="aqi-label">--</div>
+                            <div id="aqi-message" class="aqi-message">--</div>
+                        </div>
+                        <div id="aqi-pollutants" class="aqi-pollutants"></div>
+                    </div>
+                </section>
+
+                <!-- Sun & Moon Panel -->
+                <section class="sun-moon-section">
+                    <div class="sun-moon-panel">
+                        <div class="sun-panel">
+                            <div class="panel-header">
+                                <span class="panel-icon">☀️</span>
+                                <h3 class="panel-title">Sun</h3>
+                            </div>
+                            <div class="panel-content">
+                                <canvas id="sun-travel-canvas" class="sun-travel-canvas" width="280" height="140" aria-describedby="sun-travel-desc"></canvas>
+                                <div id="sun-travel-desc" class="sr-only">Sun travel arc across the sky</div>
+                                <div class="sun-details">
+                                    <div class="detail-row">
+                                        <span class="detail-label">Day length</span>
+                                        <span id="day-length" class="detail-value">--</span>
+                                    </div>
+                                    <div class="detail-row">
+                                        <span class="detail-label">Golden hour</span>
+                                        <span id="golden-hour" class="detail-value">--</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="moon-panel">
+                            <div class="panel-header">
+                                <span class="panel-icon">🌙</span>
+                                <h3 class="panel-title">Moon</h3>
+                            </div>
+                            <div class="panel-content">
+                                <canvas id="moon-phase-canvas" class="moon-phase-canvas" width="120" height="120" aria-describedby="moon-phase-desc"></canvas>
+                                <div id="moon-phase-desc" class="sr-only">Current moon phase illustration</div>
+                                <div class="moon-details">
+                                    <div id="moon-phase-name" class="moon-phase-name">--</div>
+                                    <div id="moon-illumination" class="moon-illumination">--% illuminated</div>
+                                    <div id="next-full-moon" class="next-full-moon">Next full moon: --</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- History & What to Wear -->
+                <section class="info-panels-section">
+                    <div class="info-panel">
+                        <div class="panel-header">
+                            <span class="panel-icon">📊</span>
+                            <h3 class="panel-title">Weather History</h3>
+                            <button id="history-compare-toggle" class="compare-toggle" aria-label="Toggle comparison">Compare</button>
+                        </div>
+                        <div id="history-content" class="history-content">
+                            <p class="history-empty">Come back tomorrow to see trends.</p>
+                        </div>
+                    </div>
+
+                    <div class="info-panel">
+                        <div class="panel-header">
+                            <span class="panel-icon">👔</span>
+                            <h3 class="panel-title">What To Wear</h3>
+                        </div>
+                        <div id="what-to-wear" class="what-to-wear-content"></div>
+                    </div>
+                </section>
+
+                <!-- Fun Stats -->
+                <section class="fun-stats-section">
+                    <div class="info-panel">
+                        <div class="panel-header">
+                            <span class="panel-icon">🎯</span>
+                            <h3 class="panel-title">Fun Weather Facts</h3>
+                        </div>
+                        <div id="fun-stats" class="fun-stats-content"></div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <!-- Settings Panel -->
+    <div id="settings-panel" class="settings-panel">
+        <div class="settings-header">
+            <h2 class="settings-title">Settings</h2>
+            <button id="settings-close" class="settings-close" aria-label="Close settings">✕</button>
+        </div>
+        <div class="settings-content">
+            <div class="settings-group">
+                <label class="settings-label">Temperature Unit</label>
+                <div class="settings-options">
+                    <button class="settings-option active" data-setting="unit" data-value="C">°C</button>
+                    <button class="settings-option" data-setting="unit" data-value="F">°F</button>
+                    <button class="settings-option" data-setting="unit" data-value="K">K</button>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <label class="settings-label">Wind Speed Unit</label>
+                <div class="settings-options">
+                    <button class="settings-option active" data-setting="windUnit" data-value="kmh">km/h</button>
+                    <button class="settings-option" data-setting="windUnit" data-value="mph">mph</button>
+                    <button class="settings-option" data-setting="windUnit" data-value="ms">m/s</button>
+                    <button class="settings-option" data-setting="windUnit" data-value="knots">knots</button>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <label class="settings-label">Pressure Unit</label>
+                <div class="settings-options">
+                    <button class="settings-option active" data-setting="pressureUnit" data-value="hpa">hPa</button>
+                    <button class="settings-option" data-setting="pressureUnit" data-value="inhg">inHg</button>
+                    <button class="settings-option" data-setting="pressureUnit" data-value="mmhg">mmHg</button>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <label class="settings-label">Time Format</label>
+                <div class="settings-options">
+                    <button class="settings-option active" data-setting="timeFormat" data-value="12">12-hour</button>
+                    <button class="settings-option" data-setting="timeFormat" data-value="24">24-hour</button>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <label class="settings-label">Data Refresh Interval</label>
+                <div class="settings-options">
+                    <button class="settings-option active" data-setting="refreshInterval" data-value="0">Manual</button>
+                    <button class="settings-option" data-setting="refreshInterval" data-value="600">10 min</button>
+                    <button class="settings-option" data-setting="refreshInterval" data-value="1800">30 min</button>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <label class="settings-label">Default City</label>
+                <input type="text" id="default-city-input" class="default-city-input" placeholder="Enter city name">
+                <button id="save-default-city" class="save-default-city">Save Default</button>
+            </div>
+
+            <div class="settings-group">
+                <button id="clear-history-btn" class="clear-history-btn">Clear All History</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share Modal -->
+    <div id="share-modal" class="modal" style="display: none;">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Share Weather</h3>
+                <button class="modal-close" aria-label="Close modal">✕</button>
+            </div>
+            <div class="modal-body">
+                <canvas id="share-canvas" class="share-canvas" width="600" height="300"></canvas>
+                <div class="modal-actions">
+                    <button id="download-image-btn" class="modal-btn">Download Image</button>
+                    <button id="copy-image-btn" class="modal-btn">Copy to Clipboard</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Command Palette -->
+    <div id="command-palette" class="command-palette" style="display: none;">
+        <div class="command-overlay"></div>
+        <div class="command-content">
+            <div class="command-header">
+                <h3>Keyboard Shortcuts</h3>
+            </div>
+            <div class="command-list">
+                <div class="command-item">
+                    <span class="command-key">/</span>
+                    <span class="command-desc">Focus search bar</span>
+                </div>
+                <div class="command-item">
+                    <span class="command-key">Esc</span>
+                    <span class="command-desc">Close panels</span>
+                </div>
+                <div class="command-item">
+                    <span class="command-key">F</span>
+                    <span class="command-desc">Toggle °C/°F</span>
+                </div>
+                <div class="command-item">
+                    <span class="command-key">R</span>
+                    <span class="command-desc">Refresh weather</span>
+                </div>
+                <div class="command-item">
+                    <span class="command-key">L</span>
+                    <span class="command-desc">Toggle light/dark mode</span>
+                </div>
+                <div class="command-item">
+                    <span class="command-key">H</span>
+                    <span class="command-desc">Toggle history panel</span>
+                </div>
+                <div class="command-item">
+                    <span class="command-key">Ctrl+K</span>
+                    <span class="command-desc">Open this palette</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shortcut Tooltip -->
+    <div id="shortcut-tooltip" class="shortcut-tooltip" style="display: none;"></div>
+
+    <!-- Offline Banner -->
+    <div id="offline-banner" class="offline-banner" style="display: none;">
+        <span class="offline-icon">📡</span>
+        <span id="offline-text">You appear to be offline. Showing last cached data.</span>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
