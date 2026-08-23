@@ -32,6 +32,8 @@
     <link rel="stylesheet" href="style.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>☁️</text></svg>">
     <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml">
+    <meta name="theme-color" content="#191919">
+    <link rel="manifest" href="/manifest.webmanifest">
 </head>
 <body class="theme-dark">
     <!-- Animated Weather Background -->
@@ -69,6 +71,9 @@
                 <button id="theme-toggle" class="icon-button" aria-label="Toggle theme">
                     <span class="theme-icon">🌙</span>
                 </button>
+                <button id="refresh-btn" class="icon-button" aria-label="Refresh weather data" title="Refresh weather data">
+                    <span>↻</span>
+                </button>
                 <button id="settings-toggle" class="icon-button" aria-label="Open settings">
                     <span>⚙️</span>
                 </button>
@@ -98,7 +103,19 @@
                     </button>
                 </div>
                 <div id="autocomplete-dropdown" class="autocomplete-dropdown" role="listbox" style="display: none;"></div>
-                <div id="recent-searches" class="recent-searches"></div>
+                <div id="recent-searches" class="recent-searches" aria-label="Recent searches"></div>
+                <div id="favorite-cities" class="favorite-cities" aria-label="Favorite cities"></div>
+            </section>
+
+            <section id="welcome-state" class="welcome-state" aria-labelledby="welcome-title">
+                <div class="welcome-mark" aria-hidden="true">☁</div>
+                <h1 id="welcome-title">Your weather, at a glance.</h1>
+                <p>Search for a city to see live conditions, forecasts, air quality, and practical daily guidance.</p>
+                <div class="welcome-actions">
+                    <button id="welcome-location-btn" class="location-btn" type="button"><span>📍</span><span>Use My Location</span></button>
+                    <button id="welcome-demo-btn" class="secondary-btn" type="button">Try a city</button>
+                </div>
+                <p class="welcome-note">Your preferences and saved places stay on this device. No account required.</p>
             </section>
 
             <!-- Loading Skeleton -->
@@ -118,7 +135,7 @@
             </div>
 
             <!-- Weather Content -->
-            <div id="weather-content" class="weather-content" style="display: none;">
+            <div id="weather-content" class="weather-content" style="display: none;" aria-live="polite">
                 <!-- Hero Section -->
                 <section class="hero-section">
                     <div id="hero-card" class="hero-card">
@@ -173,11 +190,17 @@
                         </div>
 
                         <div class="hero-footer">
-                            <button id="share-btn" class="share-btn" aria-label="Share weather">
-                                <span>📤</span>
-                                <span>Share</span>
-                            </button>
-                            <div id="data-age" class="data-age">Data from -- ago</div>
+                            <div class="hero-actions">
+                                <button id="favorite-btn" class="share-btn" aria-label="Save this city as a favorite" aria-pressed="false">
+                                    <span>☆</span>
+                                    <span>Favorite</span>
+                                </button>
+                                <button id="share-btn" class="share-btn" aria-label="Share weather">
+                                    <span>📤</span>
+                                    <span>Share</span>
+                                </button>
+                            </div>
+                            <div id="data-age" class="data-age" role="status">Data from -- ago</div>
                         </div>
                     </div>
 
@@ -430,6 +453,15 @@
             </div>
 
             <div class="settings-group">
+                <label class="settings-label">Theme</label>
+                <div class="settings-options">
+                    <button class="settings-option" data-setting="theme" data-value="system">System</button>
+                    <button class="settings-option active" data-setting="theme" data-value="dark">Dark</button>
+                    <button class="settings-option" data-setting="theme" data-value="light">Light</button>
+                </div>
+            </div>
+
+            <div class="settings-group">
                 <label class="settings-label">Data Refresh Interval</label>
                 <div class="settings-options">
                     <button class="settings-option active" data-setting="refreshInterval" data-value="0">Manual</button>
@@ -446,6 +478,15 @@
 
             <div class="settings-group">
                 <button id="clear-history-btn" class="clear-history-btn">Clear All History</button>
+                <button id="export-data-btn" class="secondary-btn settings-data-btn" type="button">Export Settings & Places</button>
+                <label class="secondary-btn settings-data-btn" for="import-data-input">Import Settings & Places</label>
+                <input id="import-data-input" type="file" accept="application/json,.json" hidden>
+                <button id="reset-data-btn" class="clear-history-btn" type="button">Reset Local Data</button>
+            </div>
+            <div class="settings-group install-group" id="install-group" hidden>
+                <label class="settings-label">Install Atmosphere</label>
+                <p class="settings-help">Install a local app shortcut for faster access and offline cached weather.</p>
+                <button id="install-app-btn" class="secondary-btn settings-data-btn" type="button">Install App</button>
             </div>
         </div>
     </div>
@@ -462,7 +503,9 @@
                 <canvas id="share-canvas" class="share-canvas" width="600" height="300"></canvas>
                 <div class="modal-actions">
                     <button id="download-image-btn" class="modal-btn">Download Image</button>
-                    <button id="copy-image-btn" class="modal-btn">Copy to Clipboard</button>
+                    <button id="copy-image-btn" class="modal-btn">Copy Image</button>
+                    <button id="copy-link-btn" class="modal-btn">Copy City Link</button>
+                    <button id="native-share-btn" class="modal-btn">Share</button>
                 </div>
             </div>
         </div>
@@ -512,7 +555,9 @@
     <div id="shortcut-tooltip" class="shortcut-tooltip" style="display: none;"></div>
 
     <!-- Offline Banner -->
-    <div id="offline-banner" class="offline-banner" style="display: none;">
+    <div id="sr-status" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+    <div id="offline-banner" class="offline-banner" style="display: none;" role="status">
         <span class="offline-icon">📡</span>
         <span id="offline-text">You appear to be offline. Showing last cached data.</span>
     </div>

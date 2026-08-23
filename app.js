@@ -225,6 +225,7 @@ const STATE = {
   alerts: [],
   lastUpdated: null,
   dismissedAlerts: new Set(),
+  favoriteCities: [],
   refreshTimer: null,
   clockTimer: null,
 };
@@ -232,8 +233,16 @@ const STATE = {
 function loadSettings() {
   try {
     const saved = localStorage.getItem('wv_settings');
-    if (saved) Object.assign(STATE.settings, JSON.parse(saved));
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed && typeof parsed === 'object') Object.assign(STATE.settings, parsed);
+    }
   } catch {}
+  if (!['C', 'F', 'K'].includes(STATE.settings.unit)) STATE.settings.unit = 'C';
+  if (!['kmh', 'mph', 'ms', 'knots'].includes(STATE.settings.windUnit)) STATE.settings.windUnit = 'kmh';
+  if (!['hpa', 'inhg', 'mmhg'].includes(STATE.settings.pressureUnit)) STATE.settings.pressureUnit = 'hpa';
+  if (!['12', '24'].includes(String(STATE.settings.timeFormat))) STATE.settings.timeFormat = '12';
+  if (!['dark', 'light', 'system'].includes(STATE.settings.theme)) STATE.settings.theme = 'dark';
 }
 
 function saveSettings() {
@@ -324,7 +333,12 @@ async function fetchUV(lat, lon) {
 }
 
 async function fetchGeocode(q) {
-  return apiFetch(API.geocode(q), 'geocode');
+  const key = `wv_geocode_${q.trim().toLowerCase()}`;
+  const cached = readJsonStorage(key, null);
+  if (cached && cached.timestamp && Date.now() - cached.timestamp < 10 * 60 * 1000) return cached.results;
+  const results = await apiFetch(API.geocode(q), 'geocode');
+  try { localStorage.setItem(key, JSON.stringify({ timestamp: Date.now(), results })); } catch {}
+  return results;
 }
 
 async function fetchReverseGeocode(lat, lon) {
@@ -1310,15 +1324,26 @@ function renderAll() {
   renderHistory();
   renderWhatToWear();
   renderFunStats();
+  renderFavorites();
+  updateFavoriteButton();
 }
 
 // ─── 9. SETTINGS PANEL ────────────────────────────────────────────────────────
 
+function getResolvedTheme(theme = STATE.settings.theme) {
+  if (theme === 'system') return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  return theme === 'light' ? 'light' : 'dark';
+}
+
 function applyTheme(theme) {
-  document.body.classList.toggle('theme-dark', theme === 'dark');
-  document.body.classList.toggle('theme-light', theme === 'light');
+  const resolved = getResolvedTheme(theme);
+  document.body.classList.toggle('theme-dark', resolved === 'dark');
+  document.body.classList.toggle('theme-light', resolved === 'light');
+  document.documentElement.dataset.themePreference = theme;
   const icon = document.querySelector('.theme-icon');
-  if (icon) icon.textContent = theme === 'dark' ? '🌙' : '☀️';
+  if (icon) icon.textContent = resolved === 'dark' ? '🌙' : '☀️';
+  const metaTheme = document.querySelector('meta[name="theme-color"]');
+  if (metaTheme) metaTheme.setAttribute('content', resolved === 'dark' ? '#191919' : '#f7f6f3');
   // Redraw canvases
   if (STATE.current) {
     drawSunArc('sun-arc-canvas', STATE.current.sys.sunrise, STATE.current.sys.sunset, STATE.current.timezone);
@@ -1395,8 +1420,8 @@ function renderRecentSearches() {
   if (!list.length) { container.innerHTML = ''; return; }
   container.innerHTML = list.map(city => `
     <div class="recent-chip">
-      <span class="recent-city">${city}</span>
-      <button class="recent-remove" data-city="${city}" aria-label="Remove ${city}">✕</button>
+      <button class="recent-city" type="button" aria-label="Load weather for ${escapeHtml(city)}">${escapeHtml(city)}</button>
+      <button class="recent-remove" data-city="${escapeHtml(city)}" aria-label="Remove ${escapeHtml(city)}">✕</button>
     </div>
   `).join('');
   container.querySelectorAll('.recent-city').forEach(el => {
@@ -1504,6 +1529,10 @@ function initSearchListeners() {
 async function searchCity(city) {
   if (!city) return;
   STATE.city = city;
+  const refreshButton = document.getElementById('refresh-btn');
+  if (refreshButton) refreshButton.disabled = true;
+  const welcome = document.getElementById('welcome-state');
+  if (welcome) welcome.style.display = 'none';
   STATE.loading = true;
   STATE.error = null;
 
@@ -1592,6 +1621,8 @@ async function searchCity(city) {
     }
   } finally {
     STATE.loading = false;
+    const refreshButton = document.getElementById('refresh-btn');
+    if (refreshButton) refreshButton.disabled = false;
   }
 }
 
@@ -1608,6 +1639,8 @@ function applyDataToState(cached) {
 }
 
 function showWeatherContent() {
+  const welcome = document.getElementById('welcome-state');
+  if (welcome) welcome.style.display = 'none';
   document.getElementById('loading-skeleton').style.display = 'none';
   document.getElementById('error-state').style.display = 'none';
   const wc = document.getElementById('weather-content');
@@ -1833,6 +1866,36 @@ function initShareModal() {
     a.click();
   });
 
+  document.getElementById('native-share-btn')?.addEventListener('click', async () => {
+    if (!STATE.city) return;
+    const shareUrl = new URL(window.location.href);
+    shareUrl.search = '';
+    shareUrl.hash = `city=${encodeURIComponent(STATE.city)}`;
+    const summary = STATE.current ? `${convertTemp(STATE.current.main.temp)} and ${STATE.current.weather[0].description} in ${STATE.city}` : `Weather in ${STATE.city}`;
+    if (!navigator.share) {
+      showTooltip('Native sharing is not supported here.');
+      return;
+    }
+    try {
+      await navigator.share({ title: `Weather in ${STATE.city}`, text: summary, url: shareUrl.toString() });
+    } catch (error) {
+      if (error?.name !== 'AbortError') showTooltip('Share failed.');
+    }
+  });
+
+  document.getElementById('copy-link-btn')?.addEventListener('click', async () => {
+    if (!STATE.city) return;
+    const url = new URL(window.location.href);
+    url.search = '';
+    url.hash = `city=${encodeURIComponent(STATE.city)}`;
+    try {
+      await navigator.clipboard.writeText(url.toString());
+      showTooltip('City link copied!');
+    } catch {
+      showTooltip('Copy not supported in this browser.');
+    }
+  });
+
   document.getElementById('copy-image-btn').addEventListener('click', async () => {
     try {
       const canvas = document.getElementById('share-canvas');
@@ -2012,6 +2075,8 @@ async function init() {
   }
 
   renderRecentSearches();
+  const hasSharedCity = initFreeFeatures();
+  initInstallPrompt();
   initSearchListeners();
   initSettingsListeners();
   initKeyboardShortcuts();
@@ -2022,10 +2087,11 @@ async function init() {
   initResizeHandler();
   initOfflineDetection();
   initHistoryCompare();
+  initRefreshButton();
   startClock();
 
   // Load default city (cache first, then fresh)
-  const defaultCity = STATE.settings.defaultCity || getRecentSearches()[0];
+  const defaultCity = hasSharedCity ? null : (STATE.settings.defaultCity || getRecentSearches()[0]);
   if (defaultCity) {
     const cached = loadCache(defaultCity);
     if (cached) {
@@ -2043,3 +2109,237 @@ async function init() {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
+
+// ─── 24. FREE LOCAL-FIRST FEATURES ─────────────────────────────────────────────
+
+const STORAGE_PREFIXES = ['wv_settings', 'wv_favorites', 'wv_recent', 'wv_cache_', 'wv_history_'];
+
+function readJsonStorage(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>'"]/g, character => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+  })[character]);
+}
+
+function getFavoriteCities() {
+  const value = readJsonStorage('wv_favorites', []);
+  return Array.isArray(value) ? value.filter(city => typeof city === 'string' && city.trim()).slice(0, 12) : [];
+}
+
+function saveFavoriteCities(cities) {
+  const unique = [...new Map(cities.map(city => [city.toLowerCase(), city])).values()].slice(0, 12);
+  localStorage.setItem('wv_favorites', JSON.stringify(unique));
+  STATE.favoriteCities = unique;
+}
+
+function renderFavorites() {
+  const container = document.getElementById('favorite-cities');
+  if (!container) return;
+  const favorites = getFavoriteCities();
+  STATE.favoriteCities = favorites;
+  container.innerHTML = '';
+  if (!favorites.length) return;
+
+  const label = document.createElement('span');
+  label.className = 'favorite-label';
+  label.textContent = 'Favorites';
+  container.appendChild(label);
+
+  favorites.forEach(city => {
+    const chip = document.createElement('div');
+    chip.className = 'favorite-chip';
+    const cityButton = document.createElement('button');
+    cityButton.type = 'button';
+    cityButton.className = 'favorite-city';
+    cityButton.textContent = city;
+    cityButton.setAttribute('aria-label', `Load weather for ${city}`);
+    cityButton.addEventListener('click', () => searchCity(city));
+
+    const removeButton = document.createElement('button');
+    removeButton.type = 'button';
+    removeButton.textContent = '×';
+    removeButton.setAttribute('aria-label', `Remove ${city} from favorites`);
+    removeButton.addEventListener('click', () => {
+      saveFavoriteCities(getFavoriteCities().filter(item => item.toLowerCase() !== city.toLowerCase()));
+      renderFavorites();
+      updateFavoriteButton();
+      announce(`${city} removed from favorites.`);
+    });
+
+    chip.append(cityButton, removeButton);
+    container.appendChild(chip);
+  });
+}
+
+function updateFavoriteButton() {
+  const button = document.getElementById('favorite-btn');
+  if (!button || !STATE.city) return;
+  const saved = getFavoriteCities().some(city => city.toLowerCase() === STATE.city.toLowerCase());
+  button.setAttribute('aria-pressed', String(saved));
+  button.setAttribute('aria-label', saved ? `Remove ${STATE.city} from favorites` : `Save ${STATE.city} as a favorite`);
+  button.querySelector('span').textContent = saved ? '★' : '☆';
+  const label = button.querySelectorAll('span')[1];
+  if (label) label.textContent = saved ? 'Saved' : 'Favorite';
+}
+
+function toggleFavoriteCity() {
+  if (!STATE.city) return;
+  const current = getFavoriteCities();
+  const exists = current.some(city => city.toLowerCase() === STATE.city.toLowerCase());
+  const next = exists ? current.filter(city => city.toLowerCase() !== STATE.city.toLowerCase()) : [STATE.city, ...current];
+  saveFavoriteCities(next);
+  renderFavorites();
+  updateFavoriteButton();
+  announce(exists ? `${STATE.city} removed from favorites.` : `${STATE.city} saved to favorites.`);
+}
+
+function announce(message) {
+  const status = document.getElementById('sr-status');
+  if (status) status.textContent = message;
+  showTooltip(message);
+}
+
+function downloadJson(filename, data) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
+function exportLocalData() {
+  const data = { version: 1, exportedAt: new Date().toISOString(), values: {} };
+  STORAGE_PREFIXES.forEach(prefix => {
+    Object.keys(localStorage).filter(key => key === prefix || key.startsWith(prefix)).forEach(key => {
+      data.values[key] = readJsonStorage(key, null);
+    });
+  });
+  downloadJson(`atmosphere-backup-${new Date().toISOString().slice(0, 10)}.json`, data);
+  announce('Settings, favorites, recent searches, and cached weather exported.');
+}
+
+function importLocalData(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(reader.result);
+      const values = parsed?.values;
+      if (!values || typeof values !== 'object' || parsed.version !== 1) throw new Error('invalid_backup');
+      Object.entries(values).forEach(([key, value]) => {
+        if (STORAGE_PREFIXES.some(prefix => key === prefix || key.startsWith(prefix))) {
+          localStorage.setItem(key, JSON.stringify(value));
+        }
+      });
+      announce('Backup imported. Reloading your saved Atmosphere data.');
+      setTimeout(() => window.location.reload(), 500);
+    } catch {
+      announce('That backup file is not valid Atmosphere data.');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function resetLocalData() {
+  if (!confirm('Reset all locally saved Atmosphere data, including favorites, history, settings, and cached weather?')) return;
+  Object.keys(localStorage).filter(key => STORAGE_PREFIXES.some(prefix => key === prefix || key.startsWith(prefix))).forEach(key => localStorage.removeItem(key));
+  Object.keys(sessionStorage).filter(key => key.startsWith('wv_dismiss_')).forEach(key => sessionStorage.removeItem(key));
+  window.location.reload();
+}
+
+function loadCityFromShareLink() {
+  const params = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+  const city = params.get('city');
+  if (!city) return false;
+  const input = document.getElementById('search-input');
+  if (input) input.value = city;
+  searchCity(city);
+  return true;
+}
+
+function initFreeFeatures() {
+  document.getElementById('favorite-btn')?.addEventListener('click', toggleFavoriteCity);
+  document.getElementById('export-data-btn')?.addEventListener('click', exportLocalData);
+  document.getElementById('import-data-input')?.addEventListener('change', event => {
+    const file = event.target.files?.[0];
+    if (file) importLocalData(file);
+    event.target.value = '';
+  });
+  document.getElementById('reset-data-btn')?.addEventListener('click', resetLocalData);
+  loadCityFromShareLink();
+
+  document.getElementById('welcome-demo-btn')?.addEventListener('click', () => {
+    const input = document.getElementById('search-input');
+    input.value = 'London';
+    input.focus();
+    announce('London entered. Press Enter to search.');
+  });
+  document.getElementById('welcome-location-btn')?.addEventListener('click', () => {
+    document.getElementById('location-btn')?.click();
+  });
+
+  const media = window.matchMedia?.('(prefers-color-scheme: dark)');
+  media?.addEventListener?.('change', () => {
+    if (STATE.settings.theme === 'system') applyTheme('system');
+  });
+  return Boolean(new URLSearchParams(window.location.hash.replace(/^#/, '')).get('city'));
+}
+
+function initRefreshButton() {
+  document.getElementById('refresh-btn')?.addEventListener('click', () => {
+    if (!STATE.city) {
+      document.getElementById('search-input')?.focus();
+      announce('Search for a city before refreshing weather.');
+      return;
+    }
+    searchCity(STATE.city);
+    announce('Refreshing weather data.');
+  });
+}
+
+let deferredInstallPrompt = null;
+function initInstallPrompt() {
+  const group = document.getElementById('install-group');
+  const button = document.getElementById('install-app-btn');
+  if (!group || !button) return;
+  window.addEventListener('beforeinstallprompt', event => {
+    event.preventDefault();
+    deferredInstallPrompt = event;
+    group.hidden = false;
+  });
+  button.addEventListener('click', async () => {
+    if (!deferredInstallPrompt) {
+      announce('Install is not available in this browser yet.');
+      return;
+    }
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    group.hidden = true;
+  });
+  window.addEventListener('appinstalled', () => {
+    deferredInstallPrompt = null;
+    group.hidden = true;
+    announce('Atmosphere was installed.');
+  });
+}
+
+function registerServiceWorker() {
+  if (!('serviceWorker' in navigator) || location.protocol === 'file:') return;
+  navigator.serviceWorker.register('/sw.js').catch(() => {
+    // Offline cache is an enhancement; the dashboard remains usable without it.
+  });
+}
+
+// Register the service worker as a progressive enhancement in supported hosted environments.
+registerServiceWorker();

@@ -2324,3 +2324,191 @@ input:focus-visible,
     color: black;
   }
 }
+
+
+/* ═══════════════════════════════════════════════════
+   FREE FEATURE EXPANSION: WELCOME, FAVORITES & DATA CONTROLS
+   ═══════════════════════════════════════════════════ */
+
+.welcome-state {
+  max-width: 640px;
+  margin: clamp(40px, 10vh, 100px) auto;
+  padding: clamp(28px, 6vw, 64px) clamp(20px, 5vw, 56px);
+  text-align: center;
+  background: color-mix(in srgb, var(--panel) 90%, transparent);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.16);
+}
+
+.welcome-mark {
+  width: 68px;
+  height: 68px;
+  margin: 0 auto var(--spacing-lg);
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border2);
+  border-radius: 50%;
+  color: var(--accent);
+  font-size: 34px;
+  background: var(--panel2);
+}
+
+.welcome-state h1 {
+  margin-bottom: var(--spacing-sm);
+  color: var(--text);
+  font-size: clamp(26px, 5vw, 42px);
+  line-height: 1.15;
+  letter-spacing: -0.04em;
+}
+
+.welcome-state p {
+  max-width: 480px;
+  margin: 0 auto;
+  color: var(--text-dim);
+}
+
+.welcome-actions {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+  margin-top: var(--spacing-lg);
+}
+
+.welcome-note {
+  margin-top: var(--spacing-lg) !important;
+  font-size: 12px;
+  color: var(--text-muted) !important;
+}
+
+.secondary-btn {
+  min-height: 38px;
+  padding: 8px 14px;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  background: var(--panel2);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.16s ease;
+}
+
+.secondary-btn:hover {
+  background: var(--panel);
+  border-color: var(--accent);
+}
+
+.secondary-btn:active,
+.share-btn:active,
+.icon-button:active {
+  transform: scale(0.97);
+}
+
+.favorite-cities {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-sm);
+}
+
+.favorite-cities:empty {
+  display: none;
+}
+
+.favorite-label {
+  color: var(--text-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.favorite-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px 5px 10px;
+  border: 1px solid var(--border2);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
+.favorite-chip button {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.favorite-chip button:hover {
+  color: var(--danger);
+}
+
+.hero-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.settings-data-btn {
+  width: 100%;
+  margin-top: var(--spacing-sm);
+  text-align: center;
+}
+
+.settings-help {
+  margin: 0 0 var(--spacing-sm);
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.install-group[hidden] {
+  display: none;
+}
+
+/* Make canvas-only visualizations understandable to keyboard and screen-reader users. */
+canvas:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+@media (max-width: 480px) {
+  .welcome-state {
+    margin-top: 32px;
+  }
+
+  .welcome-actions > * {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+@media print {
+  .welcome-state,
+  .favorite-cities {
+    display: none !important;
+  }
+}
+
+
+.icon-button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}

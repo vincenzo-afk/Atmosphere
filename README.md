@@ -120,6 +120,18 @@ All settings persisted to `localStorage` under the `wv_settings` key.
 - On app load with a default city: **cache renders instantly**, then fresh data fetches silently in the background
 - If offline: serves last cached data with an age indicator
 - Stale data (>3 hours) is flagged with a ⚠ indicator
+- A lightweight service worker caches the app shell for previously loaded offline visits
+- A web app manifest and vector icon allow installation as a standalone app in supported browsers
+
+### ⭐ Free Local-First Features
+- Save up to 12 favorite cities and load them with one click
+- Export or import settings, favorites, recent searches, history, and cached weather as a validated JSON backup
+- Reset all locally stored data from Settings with an explicit confirmation
+- Copy a city-specific share link or use the browser’s native share sheet when supported
+- Choose **System** theme in addition to Dark and Light; the interface follows OS theme changes
+- Use the visible refresh button, welcome-state actions, and keyboard-accessible recent-search controls
+- Geocoding suggestions are cached briefly to reduce repeated API requests
+- Reduced-motion users automatically receive a low-motion experience
 
 ---
 
@@ -154,12 +166,14 @@ const API_KEY = 'a1b2c3d4e5f6...your_actual_key...';
 
 ### 4. Open in browser
 
+For the full experience, including service-worker caching and installability, run the Vite server:
+
 ```bash
-# Just open the file directly — no server needed
-open index.html
+npm install
+npm run dev
 ```
 
-Or drag `index.html` into any browser window. That's it. ✅
+Then open the local URL printed by Vite. Directly opening `index.html` still works for the core dashboard, but browser security rules may disable service workers, native sharing, clipboard features, and API requests from a `file://` URL.
 
 ---
 
@@ -170,10 +184,13 @@ atmosphere/
 ├── index.html       # Full page layout — all panels, canvases, modals
 ├── style.css        # All styles — Notion dark theme, light mode, animations
 ├── app.js           # All logic — API, canvas drawing, state, rendering
+├── public/icon.svg  # Free vector icon used by the browser and install manifest
+├── public/manifest.webmanifest # Install metadata for supported browsers
+├── public/sw.js     # App-shell service worker for offline visits
 └── README.md        # You are here
 ```
+The app remains dependency-light: it uses vanilla HTML, CSS, and JavaScript with Vite only for local development and production bundling.
 
-No `node_modules`. No `package.json`. No bundler. Three files.
 
 ---
 
@@ -256,7 +273,10 @@ Works in all modern browsers. Requires:
 - Canvas 2D API
 - Fetch API
 - Geolocation API (optional, for "Use My Location")
-- ClipboardItem API (optional, for "Copy to Clipboard")
+- Clipboard API / ClipboardItem API (optional, for link and image copying)
+- Web Share API (optional, for the native share sheet)
+- Service Worker API (optional, for app-shell offline caching)
+- Web App Manifest support (optional, for installation)
 - `navigator.onLine` (offline detection)
 
 No polyfills needed for current versions of Chrome, Firefox, Safari, and Edge.
