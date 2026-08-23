@@ -1,312 +1,347 @@
-# ☁ Atmosphere — Weather Dashboard
+<a name="top"></a>
 
-A fully-featured, beautifully designed weather dashboard built with pure **Vanilla HTML, CSS, and JavaScript**. No frameworks, no build tools, no dependencies — just open `index.html` in your browser and go.
+# Atmosphere
 
-> Powered by the [OpenWeatherMap](https://openweathermap.org/api) free tier API.
+> A focused weather dashboard that turns live conditions into a calm, visual experience.
 
-![Atmosphere Weather Dashboard](https://img.shields.io/badge/Atmosphere-Weather%20Dashboard-white?style=for-the-badge&logo=cloud&logoColor=black)
-![Vanilla JS](https://img.shields.io/badge/Vanilla-JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
-![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
-![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)
-![No Build Tools](https://img.shields.io/badge/No%20Build%20Tools-Required-4caf50?style=for-the-badge)
+[![Vite](https://img.shields.io/badge/Vite-5.x-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
+[![JavaScript](https://img.shields.io/badge/JavaScript-ES%20modules-F7DF1E?logo=javascript&logoColor=111111)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+[![License status](https://img.shields.io/badge/license-not%20included-lightgrey)](#license)
+[![Live demo](https://img.shields.io/badge/live%20demo-atmosphere--data.vercel.app-111111)](https://atmosphere-data.vercel.app)
 
+[Live demo](https://atmosphere-data.vercel.app) · [Report a bug](https://github.com/vincenzo-afk/Atmosphere/issues/new?template=bug_report.md) · [Request a feature](https://github.com/vincenzo-afk/Atmosphere/issues/new?template=feature_request.md) · [Security policy](SECURITY.md)
 
----
+## Table of contents
 
-🌐 Live Demo: https://atmosphere-data.vercel.app
-
-## ✨ Features
-
-### 🔍 Smart Search
-- City search with **400ms debounced autocomplete** — shows up to 5 suggestions with country flag emojis
-- **"Use My Location"** button using the browser Geolocation API + reverse geocoding
-- **Recent searches** saved as clickable chips (last 6 cities), each removable with ✕
-- All API calls made in parallel via `Promise.all()` for maximum speed
-
-### 🌤 Hero Weather Card
-- Large current temperature with animated count-up on load
-- Feels like / Min / Max temperatures
-- Dynamic **background tint** that changes per weather condition (clear, clouds, rain, snow, fog, thunderstorm)
-- Animated weather emoji (☀️ spins, ☁️ drifts, 🌧️ bounces, ⛈️ shakes, ❄️ falls, 🌙 pulses, 🌫️ fades)
-- Quick stats: Humidity · Wind with direction arrow · Visibility · Pressure
-
-### 📊 Side Stats Grid (Canvas-drawn)
-| Card | What it shows |
-|---|---|
-| 🌅 Sunrise & Sunset | Arc showing sun position, times, countdown to next event |
-| ☀️ UV Index | Color-coded value (Low → Extreme) with progress bar and recommendation |
-| 🧭 Wind | Canvas compass rose with rotating needle and speed |
-| 💧 Humidity | Arc gauge with comfort label (Dry / Comfortable / Humid / Very Humid) |
-| 🌡 Pressure | Value with trend (↑ Rising / ↓ Falling / → Steady) and mini scale bar |
-| 👁 Visibility | Distance with quality label and dot indicator row |
-
-### 📈 Hourly Forecast Chart (Canvas — no libraries)
-- Smooth **cubic bezier** temperature curve for next 24 hours (8 × 3hr intervals)
-- Gradient fill under curve
-- **Rain probability bars** at the base of the chart
-- Floating temperature labels + weather emoji per data point
-- **"NOW" marker** — vertical dotted line at current time
-- **Hover tooltip** showing full details per hour (temp, feels like, rain %, wind)
-- Fully **responsive** — redraws on window resize
-
-### 📅 5-Day Forecast
-- High / Low temps, dominant condition icon, rain probability, wind speed
-- **Click any day card** to expand and show all 3-hour intervals for that day
-- Days aggregated from 3hr API intervals (max temp, min temp, most common icon, peak rain probability)
-
-### 🌫 Air Quality Index
-- Canvas ring gauge (1–5 scale: Good → Very Poor)
-- Color-coded AQI label with health recommendation
-- Individual pollutant grid: **PM2.5, PM10, NO₂, O₃, SO₂, CO** — each with value in μg/m³ and a danger bar vs WHO limits
-
-### 🌙 Sun & Moon Panel
-- **Sun side**: animated arc showing travel across the sky with a moving dot, day length, golden hour times
-- **Moon side**: canvas-drawn moon phase illustration, phase name, illumination %, days until next full moon — calculated purely in JavaScript (no external library)
-
-### 📋 Weather History
-- Stores the **last 7 days** of snapshots per city in `localStorage`
-- Displayed as a color-coded table (warm tints for hot temps, cool tints for cold)
-- **Compare** button shows today vs yesterday side by side
-
-### 👔 What To Wear
-- Temperature-based outfit suggestions with emoji
-- Extra tips for rain, strong wind, high UV, high humidity
-
-### 🎯 Fun Weather Facts
-- Contextual comparisons: wind speed vs cycling pace vs highway car, visibility in Eiffel Towers, humidity vs sauna/desert, etc.
-
-### 🚨 Smart Weather Alerts
-- Auto-generated dismissible banners for: extreme heat (>40°C), freezing (<0°C), strong wind (>60 km/h), lightning, blizzard, very high UV (>8), very poor AQI
-- Dismissal stored in `sessionStorage` — won't reappear in the same tab session
-
-### 📤 Share Weather Card
-- Renders a **600×300px canvas image** of the current weather
-- Download as PNG or **Copy to Clipboard** (ClipboardItem API)
-
-### ⚙️ Full Settings Panel
-| Setting | Options |
-|---|---|
-| Temperature | °C / °F / K |
-| Wind speed | km/h / mph / m/s / knots |
-| Pressure | hPa / inHg / mmHg |
-| Time format | 12-hour / 24-hour |
-| Theme | Dark / Light |
-| Default city | Manual or auto-saved on search |
-| Auto-refresh | Manual / Every 10 min / Every 30 min |
-| Clear history | With confirmation |
-
-All settings persisted to `localStorage` under the `wv_settings` key.
-
-### 🎨 Design
-- **Notion-inspired flat dark theme** (default) — no gradients, no glows, no neon
-- Full **light mode** with one click — all CSS variables swap instantly
-- Animated weather backgrounds per condition (rain drops, snow, stars, sunburst, drifting clouds, lightning flash)
-- Smooth panel fade-in + slide-up animations, staggered on load
-- **JetBrains Mono** for all numeric data, **Inter** for UI text
-
-### ⌨️ Keyboard Shortcuts
-| Key | Action |
-|---|---|
-| `/` | Focus search bar |
-| `Esc` | Close panels / dropdowns |
-| `F` | Toggle °C / °F |
-| `R` | Refresh current city |
-| `L` | Toggle light / dark mode |
-| `H` | Scroll to history panel |
-| `Ctrl + K` | Open keyboard shortcuts palette |
-
-### 📡 Offline Support
-- Every successful fetch is cached to `localStorage` under `wv_cache_{city}`
-- On app load with a default city: **cache renders instantly**, then fresh data fetches silently in the background
-- If offline: serves last cached data with an age indicator
-- Stale data (>3 hours) is flagged with a ⚠ indicator
-- A lightweight service worker caches the app shell for previously loaded offline visits
-- A web app manifest and vector icon allow installation as a standalone app in supported browsers
-
-### ⭐ Free Local-First Features
-- Save up to 12 favorite cities and load them with one click
-- Export or import settings, favorites, recent searches, history, and cached weather as a validated JSON backup
-- Reset all locally stored data from Settings with an explicit confirmation
-- Copy a city-specific share link or use the browser’s native share sheet when supported
-- Choose **System** theme in addition to Dark and Light; the interface follows OS theme changes
-- Use the visible refresh button, welcome-state actions, and keyboard-accessible recent-search controls
-- Geocoding suggestions are cached briefly to reduce repeated API requests
-- Reduced-motion users automatically receive a low-motion experience
+- [About the project](#about-the-project)
+- [Tech stack](#tech-stack)
+- [Getting started](#getting-started)
+- [Usage](#usage)
+- [Weather-data integration](#weather-data-integration)
+- [Project structure](#project-structure)
+- [Features and roadmap](#features-and-roadmap)
+- [Testing](#testing)
+- [Deployment](#deployment)
+- [Contributing](#contributing)
+- [Security](#security)
+- [License](#license)
+- [Acknowledgments](#acknowledgments)
 
 ---
 
-## 🚀 Getting Started
+## <a name="about-the-project"></a>About the project
 
-### 1. Clone the repository
+Atmosphere is a client-side weather dashboard for searching cities and viewing current conditions, forecasts, air-quality measurements, astronomical information, weather history, alerts, and practical guidance. It uses a small Vite build with plain HTML, CSS, and JavaScript rather than a frontend framework or runtime backend.
 
-```bash
-git clone https://github.com/yourusername/atmosphere.git
-cd atmosphere
+The interface is designed to keep a large amount of weather information readable. Current conditions are presented in a hero card, quantitative details use canvas-based charts and gauges, and the dashboard adapts its background treatment to the current weather condition. Personal preferences, recent searches, favorites, cached responses, and short weather history are stored locally in the browser.
+
+### Key capabilities
+
+- Search cities with debounced geocoding suggestions and browser geolocation.
+- View current temperature, feels-like temperature, humidity, wind, visibility, pressure, sunrise, and sunset.
+- Explore an hourly temperature and precipitation-probability chart.
+- Expand five-day forecast cards to inspect three-hour intervals.
+- Review air-quality index and pollutant measurements.
+- Inspect sun travel, golden-hour timing, moon phase, weather history, and daily clothing guidance.
+- Receive locally generated severe-weather and air-quality alerts.
+- Switch temperature, wind, pressure, time, and theme preferences.
+- Save favorite cities, export/import local data, reset local data, and share city links.
+- Install the application and use the cached app shell offline in browsers that support Progressive Web App (PWA) features.
+
+### Screenshots and live preview
+
+The hosted preview is available at [atmosphere-data.vercel.app](https://atmosphere-data.vercel.app). The dashboard requires a valid OpenWeatherMap API key for live requests; cached data and the app shell remain available only after they have been created in the browser.
+
+### Architecture
+
+```mermaid
+flowchart LR
+    User[Browser user] --> UI[index.html + style.css]
+    UI --> App[app.js]
+    App --> OWM[OpenWeatherMap APIs]
+    App --> Local[localStorage and sessionStorage]
+    App --> Canvas[Canvas 2D charts and gauges]
+    Browser[Service worker] --> Shell[Cached app shell]
+    App --> Browser
+    Build[Vite] --> UI
+    Build --> App
 ```
 
-### 2. Get a free OpenWeatherMap API key
+The application has no project-owned HTTP API or database. OpenWeatherMap is called directly from the browser, and the API key is supplied through Vite environment replacement during development and builds.
 
-1. Go to [openweathermap.org](https://openweathermap.org/api) and create a free account
-2. Navigate to **API Keys** in your dashboard
-3. Copy your default key (or generate a new one)
+---
 
-> The free tier includes: Current Weather, 5-Day Forecast, Air Pollution, UV Index, and Geocoding — everything Atmosphere uses.
+## <a name="tech-stack"></a>Tech stack
 
-### 3. Add your API key
+| Area | Verified implementation |
+|---|---|
+| Frontend | Semantic HTML, CSS, and JavaScript using ES modules |
+| Build tool | Vite `^5.0.0` for development and production bundling |
+| Visualizations | Browser Canvas 2D API; no charting library |
+| Browser storage | `localStorage` for settings, cache, recent searches, favorites, and history; `sessionStorage` for dismissed alerts |
+| Offline/installability | Service Worker API, Web App Manifest, Cache Storage API, and browser install prompt |
+| External integration | OpenWeatherMap Current Weather, Forecast, Air Pollution, UV, Direct Geocoding, Reverse Geocoding, and weather icons |
+| Deployment | Existing live deployment at Vercel: `https://atmosphere-data.vercel.app` |
+| Runtime backend | None in this repository |
 
-Open `app.js` and replace line 7:
+The production browser bundle has no application runtime dependency beyond standard browser APIs. Vite is the only declared development dependency in `package.json`.
 
-```js
-// Before
-const API_KEY = 'YOUR_API_KEY_HERE';
+---
 
-// After
-const API_KEY = 'a1b2c3d4e5f6...your_actual_key...';
-```
+## <a name="getting-started"></a>Getting started
 
-### 4. Open in browser
+### Prerequisites
 
-For the full experience, including service-worker caching and installability, run the Vite server:
+Install a current Node.js release with npm. A modern browser is required for the full experience. Canvas 2D, Fetch, and ES modules are required; geolocation, clipboard, Web Share, service workers, and installation are progressive enhancements.
+
+You also need an OpenWeatherMap account and API key for live weather requests. The repository reads the key from `VITE_OPENWEATHER_API_KEY`.
+
+### Installation
 
 ```bash
+git clone https://github.com/vincenzo-afk/Atmosphere.git
+cd Atmosphere
 npm install
+```
+
+Create a local environment file from the repository template:
+
+```bash
+cp .env.example .env
+```
+
+Set the value in `.env`:
+
+```dotenv
+VITE_OPENWEATHER_API_KEY=your_api_key_here
+```
+
+Start the development server:
+
+```bash
 npm run dev
 ```
 
-Then open the local URL printed by Vite. Directly opening `index.html` still works for the core dashboard, but browser security rules may disable service workers, native sharing, clipboard features, and API requests from a `file://` URL.
+To create a production bundle:
 
----
-
-## 📁 Project Structure
-
-```
-atmosphere/
-├── index.html       # Full page layout — all panels, canvases, modals
-├── style.css        # All styles — Notion dark theme, light mode, animations
-├── app.js           # All logic — API, canvas drawing, state, rendering
-├── public/icon.svg  # Free vector icon used by the browser and install manifest
-├── public/manifest.webmanifest # Install metadata for supported browsers
-├── public/sw.js     # App-shell service worker for offline visits
-└── README.md        # You are here
-```
-The app remains dependency-light: it uses vanilla HTML, CSS, and JavaScript with Vite only for local development and production bundling.
-
-
----
-
-## 🔌 APIs Used
-
-All from the [OpenWeatherMap free tier](https://openweathermap.org/api):
-
-| Endpoint | Purpose |
-|---|---|
-| `/data/2.5/weather` | Current weather conditions |
-| `/data/2.5/forecast` | 5-day / 3-hour forecast |
-| `/data/2.5/air_pollution` | AQI and pollutant components |
-| `/data/2.5/uvi` | UV Index |
-| `/geo/1.0/direct` | City name → lat/lon (autocomplete) |
-| `/geo/1.0/reverse` | lat/lon → city name (geolocation) |
-
----
-
-## 🏗 Technical Architecture
-
-### State Management
-Single global `STATE` object — all UI reads from it, never stores display data elsewhere.
-
-```js
-const STATE = {
-  city, lat, lon,
-  current,        // OWM current weather response
-  forecast,       // OWM forecast response
-  airQuality,     // OWM air pollution response
-  uv,             // OWM UV response
-  settings: { unit, windUnit, pressureUnit, timeFormat, theme, defaultCity, refreshInterval },
-  history,        // per-city 7-day snapshots
-  cache,          // per-city last successful fetch
-  loading, error, alerts, lastUpdated
-};
+```bash
+npm run build
 ```
 
-### Canvas Drawing
-Every chart and gauge is hand-drawn using the **Canvas 2D API** — no Chart.js, no D3:
-- `drawHourlyChart()` — bezier curve, gradient fill, rain bars, hover hit-testing
-- `drawCompass()` — compass rose with rotating needle
-- `drawHumidityGauge()` — arc gauge
-- `drawSunArc()` / `drawSunTravel()` — sun position arc
-- `drawMoonPhase()` — illuminated ellipse composited over circle
-- `drawAQIRing()` — progress ring
-- `drawPressureBar()` — mini scale bar
-- `drawShareCard()` — 600×300 shareable PNG
+To serve the generated build using Vite’s preview server:
 
-All canvases read colors via `getComputedStyle` CSS variables — so they automatically respect light/dark mode and redraw correctly on theme toggle.
+```bash
+npm run preview
+```
 
-### localStorage Keys
-| Key | Contents |
+### Configuration
+
+| Variable | Required | Description |
+|---|---:|---|
+| `VITE_OPENWEATHER_API_KEY` | Yes for live data | OpenWeatherMap API key exposed to the client-side Vite bundle |
+
+Do not commit `.env` files or API keys. The existing `.gitignore` excludes `.env`, `.env.local`, and other local environment variants.
+
+---
+
+## <a name="usage"></a>Usage
+
+Open Atmosphere through the development or preview URL, enter a city in the search field, and press `Enter`. Select a geocoding suggestion when it appears, or use **Use My Location** when the browser grants location access.
+
+After a city loads, use the dashboard controls to change units, open Settings, refresh the data, save the current city as a favorite, or open the share modal. Settings are stored on the current browser and do not require an account.
+
+### Keyboard shortcuts
+
+| Shortcut | Action |
 |---|---|
-| `wv_settings` | User preferences (unit, theme, etc.) |
-| `wv_cache_{city}` | Last successful API response for a city |
-| `wv_history_{city}` | Last 7 daily weather snapshots |
-| `wv_recent` | Last 6 searched cities |
+| `/` | Focus the city search field |
+| `Esc` | Close panels, dialogs, and autocomplete |
+| `F` | Toggle temperature units |
+| `R` | Refresh the current city |
+| `L` | Toggle the selected light/dark theme |
+| `H` | Scroll to weather history |
+| `Ctrl+K` or `Cmd+K` | Open the shortcut palette |
+
+### Local data controls
+
+The Settings panel provides the following local-first controls:
+
+- **Favorite cities:** Save and load up to twelve cities.
+- **Export Settings & Places:** Download settings, favorites, recent searches, history, and cached responses as a versioned JSON file.
+- **Import Settings & Places:** Restore supported values from an Atmosphere backup file.
+- **Reset Local Data:** Remove locally stored Atmosphere data after confirmation.
+- **Copy City Link:** Create a URL containing the selected city in the hash fragment.
+- **Share:** Use the browser’s native share sheet when supported.
 
 ---
 
-## 🧪 Error Handling
+## <a name="weather-data-integration"></a>Weather-data integration
 
-| Scenario | Behavior |
+Atmosphere calls the following OpenWeatherMap endpoints directly from `app.js`:
+
+| Service | Endpoint | Purpose |
+|---|---|---|
+| Current weather | `/data/2.5/weather` | Current conditions and coordinates |
+| Forecast | `/data/2.5/forecast` | Five-day forecast in three-hour intervals |
+| Air pollution | `/data/2.5/air_pollution` | Air-quality index and pollutant components |
+| UV index | `/data/2.5/uvi` | Current ultraviolet index |
+| Direct geocoding | `/geo/1.0/direct` | City name to coordinates and location suggestions |
+| Reverse geocoding | `/geo/1.0/reverse` | Browser coordinates to a city name |
+| Weather icon | `https://openweathermap.org/img/wn/{icon}@2x.png` | Condition icon displayed in the hero card |
+
+All calls use the `VITE_OPENWEATHER_API_KEY` environment variable. The application provides user-facing handling for missing or invalid keys, city-not-found responses, rate limits, network errors, offline mode, and denied geolocation.
+
+This repository does not expose a server-side proxy, so the key is delivered to the browser by design. Use an API key policy and quota appropriate for a public client-side application.
+
+---
+
+## <a name="project-structure"></a>Project structure
+
+```text
+Atmosphere/
+├── app.js                         # API calls, state, rendering, charts, storage, and event handlers
+├── index.html                     # Dashboard markup, dialogs, settings, and PWA links
+├── style.css                      # Themes, layout, responsive rules, animations, and print styles
+├── package.json                   # Vite scripts and development dependency
+├── package-lock.json              # npm dependency lockfile
+├── .env.example                   # Required Vite environment variable template
+├── .github/
+│   ├── dependabot.yml             # Weekly npm dependency update configuration
+│   ├── pull_request_template.md   # Pull-request checklist
+│   ├── ISSUE_TEMPLATE/            # Bug and feature-request forms
+│   └── workflows/ci.yml           # npm test and production-build verification
+├── public/
+│   ├── googlebd395c84086f0059.html # Existing Google Search Console verification file
+│   ├── icon.svg                   # Installable app icon
+│   ├── manifest.webmanifest       # PWA metadata
+│   ├── og-image.png               # Social preview image
+│   ├── robots.txt                 # Crawler directives
+│   ├── sitemap.xml                # Sitemap for the hosted homepage
+│   └── sw.js                      # App-shell service worker
+├── tests/
+│   └── feature-smoke.test.mjs     # Dependency-free repository smoke tests
+├── CODE_OF_CONDUCT.md             # Contributor Covenant-based conduct policy
+├── CONTRIBUTING.md                # Setup and pull-request guidance
+├── SECURITY.md                    # Vulnerability-reporting policy
+└── README.md                      # Project documentation
+```
+
+---
+
+## <a name="features-and-roadmap"></a>Features and roadmap
+
+### Current features
+
+- [x] Current weather, five-day forecast, hourly forecast, air quality, UV index, sun, moon, history, alerts, and clothing guidance.
+- [x] City search, debounced suggestions, recent searches, and browser geolocation.
+- [x] Dark, light, and system theme preferences with unit and time-format settings.
+- [x] Local cache fallback and offline status messaging.
+- [x] Favorites, local JSON backup/restore, reset controls, share links, and native sharing.
+- [x] Installable PWA metadata and a cached app shell.
+- [x] Canvas-based visualizations with responsive resizing.
+- [x] Dependency-free smoke tests and Vite production builds.
+
+### Known limitations
+
+- Live weather requests require a user-provided OpenWeatherMap API key.
+- Weather API quotas, endpoint availability, and data freshness are controlled by OpenWeatherMap.
+- Data is stored per browser and is not synchronized between devices.
+- The service worker caches the app shell; live weather data still requires a network connection unless a matching local cache exists.
+- Native sharing, clipboard operations, geolocation, installation, and service workers depend on browser support and secure-context rules.
+
+### Roadmap
+
+Potential future work should remain aligned with the current static architecture: improve data validation and browser compatibility, expand automated browser coverage, and add optional client-side visualizations without introducing an unnecessary backend or paid runtime service.
+
+See the repository’s [commit history](https://github.com/vincenzo-afk/Atmosphere/commits/main) for completed changes and the [issues page](https://github.com/vincenzo-afk/Atmosphere/issues) for active discussion.
+
+---
+
+## <a name="testing"></a>Testing
+
+Run the repository’s dependency-free smoke tests:
+
+```bash
+npm test
+```
+
+The tests verify that the primary new controls are present, PWA metadata and service-worker hooks are linked, and the core local-first feature functions remain wired into `app.js`.
+
+Run the production build check:
+
+```bash
+npm run build
+```
+
+The GitHub Actions workflow in `.github/workflows/ci.yml` runs `npm ci`, `npm test`, and `npm run build` on Node.js 20 for pushes and pull requests targeting `main`. Dependabot is configured for weekly npm dependency updates. No coverage tool, lint script, or end-to-end browser suite is currently configured. Manual browser verification should include a clean profile, mobile and desktop layouts, keyboard navigation, theme switching, import/export, offline reload behavior, and a browser with optional APIs unavailable.
+
+---
+
+## <a name="deployment"></a>Deployment
+
+The repository includes a live Vercel deployment at [atmosphere-data.vercel.app](https://atmosphere-data.vercel.app). The source tree does not include a Vercel project configuration file, so deployment settings are managed by the hosting project rather than committed here.
+
+For a static Vercel deployment, use the repository root as the project directory, configure `VITE_OPENWEATHER_API_KEY` as an environment variable, and use the following commands from `package.json`:
+
+| Setting | Value |
 |---|---|
-| API key missing | Yellow setup banner, no fetch attempted |
-| City not found | Friendly error with search-again button |
-| API key invalid | Clear message with instructions |
-| Rate limit hit | Message with retry button |
-| Network offline | Falls back to cached data with age shown |
-| Geolocation denied | Friendly message, search manually |
+| Install command | `npm install` |
+| Build command | `npm run build` |
+| Output directory | `dist` |
+| Environment variable | `VITE_OPENWEATHER_API_KEY` |
 
-Errors always show a clear icon, title, description, and action button. Raw API messages are never shown to the user.
+A different static host can serve the generated `dist/` directory. Service workers and the install prompt require HTTPS or a supported local development origin; direct `file://` opening is not equivalent to a hosted deployment.
 
 ---
 
-## 🌐 Browser Compatibility
+## <a name="contributing"></a>Contributing
 
-Works in all modern browsers. Requires:
-- ES6+ (arrow functions, async/await, destructuring, template literals)
-- Canvas 2D API
-- Fetch API
-- Geolocation API (optional, for "Use My Location")
-- Clipboard API / ClipboardItem API (optional, for link and image copying)
-- Web Share API (optional, for the native share sheet)
-- Service Worker API (optional, for app-shell offline caching)
-- Web App Manifest support (optional, for installation)
-- `navigator.onLine` (offline detection)
+Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) before opening a pull request.
 
-No polyfills needed for current versions of Chrome, Firefox, Safari, and Edge.
+For changes:
 
----
+1. Fork the repository or create a topic branch.
+2. Install dependencies with `npm install`.
+3. Run `npm test` and `npm run build`.
+4. Describe the user-facing change, test coverage, and any API or storage impact.
+5. Open a pull request using the repository template.
 
-## 🤝 Contributing
-
-Pull requests are welcome. For major changes, open an issue first to discuss what you'd like to change.
-
-1. Fork the repo
-2. Create your branch (`git checkout -b feature/my-feature`)
-3. Commit your changes (`git commit -m 'Add my feature'`)
-4. Push to the branch (`git push origin feature/my-feature`)
-5. Open a Pull Request
+Keep changes focused, preserve the vanilla HTML/CSS/JavaScript architecture, avoid committing secrets or generated output, and update the README when commands or behavior change. Use concise imperative commit messages; Conventional Commit prefixes are encouraged but not enforced by the current repository configuration.
 
 ---
 
-## 📜 License
+## <a name="security"></a>Security
 
-[MIT](LICENSE) — free to use, modify, and distribute.
+Read [SECURITY.md](SECURITY.md) for the private vulnerability-reporting path and supported-version policy.
 
----
-
-## 🙏 Credits
-
-- Weather data by [OpenWeatherMap](https://openweathermap.org)
-- Fonts: [Inter](https://rsms.me/inter/) + [JetBrains Mono](https://www.jetbrains.com/legalnotice/fonts/) via Google Fonts
-- Design language inspired by [Notion](https://notion.so)
+The OpenWeatherMap API key is a client-side build variable, not a server-side secret in this architecture. Never commit `.env` files, real keys, or exported browser data. Review imported JSON before restoring it, and keep browser permissions such as geolocation disabled unless needed.
 
 ---
 
-<p align="center">Built with ☁ and vanilla JavaScript</p>
+## <a name="license"></a>License
+
+No `LICENSE` file is currently present in this repository. Copyright and redistribution terms are therefore not explicitly granted by the project at this time. Add a license file with the repository owner’s chosen terms before publishing the project for reuse.
+
+---
+
+## <a name="acknowledgments"></a>Acknowledgments
+
+- Weather data and geocoding are provided by [OpenWeatherMap](https://openweathermap.org/).
+- The build pipeline uses [Vite](https://vitejs.dev/).
+- The interface uses standard browser APIs including Canvas 2D, Fetch, local storage, Cache Storage, service workers, and the Web App Manifest.
+- The project’s visual direction is described in the source as Notion-inspired.
+
+---
+
+## References
+
+[1]: https://github.com/vincenzo-afk/Atmosphere "Atmosphere on GitHub"
+[2]: https://openweathermap.org/api "OpenWeatherMap API documentation"
+[3]: https://vitejs.dev/guide/ "Vite documentation"
+[4]: https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps "MDN Progressive Web Apps"
+
+[GitHub](https://github.com/vincenzo-afk/Atmosphere) · [Live website](https://atmosphere-data.vercel.app) · [Issues](https://github.com/vincenzo-afk/Atmosphere/issues)
+
+Built with vanilla JavaScript by [vincenzo-afk](https://github.com/vincenzo-afk).
+
+<p align="right">[Back to top](#top)</p>
